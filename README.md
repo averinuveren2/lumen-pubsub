@@ -18,18 +18,14 @@ composer require averinuveren2/lumen-pubsub
 
 Register the service provider in app.php
 ```php
-'providers' => [
-    // ...
-    Averinuveren\LumenPubSub\PubSubServiceProvider::class,
-]
+$app->register(Averinuveren\LumenPubSub\PubSubServiceProvider::class);
 ```
 
 Register the facade in app.php
 ```php
-'aliases' => [
-    // ...
-    'PubSub' => Averinuveren\LumenPubSub\PubSubFacade::class,
-]
+$app->withFacades(true, [
+    Averinuveren\LumenPubSub\PubSubFacade::class => 'PubSub'
+]);
 ```
 
 The package has a default configuration which uses the following environment variables.

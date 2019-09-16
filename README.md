@@ -73,6 +73,50 @@ You can then edit the generated config at `app/config/pubsub.php`.
 3. Add the following to your php.ini file to enable the php-rdkafka extension
     `extension=rdkafka.so`
 
+## Usage
+
+```php
+// get the pub-sub manager
+$pubsub = app('pubsub');
+
+// note: function calls on the manager are proxied through to the default connection
+// eg: you can do this on the manager OR a connection
+$pubsub->publish('channel_name', 'message');
+
+// get the default connection
+$pubsub = app('pubsub.connection');
+// or
+$pubsub = app(\Superbalist\PubSub\PubSubAdapterInterface::class);
+
+// get a specific connection
+$pubsub = app('pubsub')->connection('redis');
+
+// publish a message
+// the message can be a string, array, bool, object - anything which can be json encoded
+$pubsub->publish('channel_name', 'this is where your message goes');
+$pubsub->publish('channel_name', ['key' => 'value']);
+$pubsub->publish('channel_name', true);
+
+// publish multiple messages
+$messages = [
+    'message 1',
+    'message 2',
+];
+$pubsub->publishBatch('channel_name', $messages);
+
+// subscribe to a channel
+$pubsub->subscribe('channel_name', function ($message) {
+    var_dump($message);
+});
+
+// all the above commands can also be done using the facade
+PubSub::connection('kafka')->publish('channel_name', 'Hello World!');
+
+PubSub::connection('kafka')->subscribe('channel_name', function ($message) {
+    var_dump($message);
+});
+```
+
 ## Creating a Subscriber
 
 The package includes a helper command `php artisan make:subscriber MyExampleSubscriber` to stub new subscriber command classes.

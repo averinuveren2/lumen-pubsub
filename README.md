@@ -1,21 +1,6 @@
-# laravel-pubsub
+# Lumen-pubsub
 
-A Pub-Sub abstraction for Laravel.
-
-[![Author](http://img.shields.io/badge/author-@superbalist-blue.svg?style=flat-square)](https://twitter.com/superbalist)
-[![Build Status](https://img.shields.io/travis/Superbalist/laravel-pubsub/master.svg?style=flat-square)](https://travis-ci.org/Superbalist/laravel-pubsub)
-[![StyleCI](https://styleci.io/repos/67405993/shield?branch=master)](https://styleci.io/repos/67405993)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
-[![Packagist Version](https://img.shields.io/packagist/v/superbalist/laravel-pubsub.svg?style=flat-square)](https://packagist.org/packages/superbalist/laravel-pubsub)
-[![Total Downloads](https://img.shields.io/packagist/dt/superbalist/laravel-pubsub.svg?style=flat-square)](https://packagist.org/packages/superbalist/laravel-pubsub)
-
-This package is a wrapper bridging [php-pubsub](https://github.com/Superbalist/php-pubsub) into Laravel.
-
-For **Laravel 4** support, use the package https://github.com/Superbalist/laravel4-pubsub
-
-Please note that **Laravel 5.3** is only supported up until version 2.0.2.
-
-2.0.3+ supports **Laravel 5.4 and up** moving forward.
+A Pub-Sub abstraction for lumen.
 
 The following adapters are supported:
 * Local
@@ -28,14 +13,14 @@ The following adapters are supported:
 ## Installation
 
 ```bash
-composer require superbalist/laravel-pubsub
+composer require averinuveren2/lumen-pubsub
 ```
 
 Register the service provider in app.php
 ```php
 'providers' => [
     // ...
-    Superbalist\LaravelPubSub\PubSubServiceProvider::class,
+    Averinuveren\LumenPubSub\PubSubServiceProvider::class,
 ]
 ```
 
@@ -43,7 +28,7 @@ Register the facade in app.php
 ```php
 'aliases' => [
     // ...
-    'PubSub' => Superbalist\LaravelPubSub\PubSubFacade::class,
+    'PubSub' => Averinuveren\LumenPubSub\PubSubFacade::class,
 ]
 ```
 
@@ -64,71 +49,29 @@ HTTP_PUBSUB_URI=null
 HTTP_PUBSUB_SUBSCRIBE_CONNECTION=redis
 ```
 
-To customize the configuration file, publish the package configuration using Artisan.
-```bash
-php artisan vendor:publish --provider="Superbalist\LaravelPubSub\PubSubServiceProvider"
-```
-
 You can then edit the generated config at `app/config/pubsub.php`.
 
-## Kafka Adapter Installation
+## Kafka Adapter Requirements
 
-Please note that whilst the package is bundled with support for the [php-pubsub-kafka](https://github.com/Superbalist/php-pubsub-kafka)
-adapter, the adapter is not included by default.
+1. Install [librdkafka c library](https://github.com/edenhill/librdkafka)
 
-This is because the KafkaPubSubAdapter has an external dependency on the `librdkafka c library` and the `php-rdkafka`
-PECL extension.
+    ```bash
+    $ cd /tmp
+    $ mkdir librdkafka
+    $ cd librdkafka
+    $ git clone https://github.com/edenhill/librdkafka.git .
+    $ ./configure
+    $ make
+    $ make install
+    ```
+2. Install the [php-rdkafka](https://github.com/arnaud-lb/php-rdkafka) PECL extension
 
-If you plan on using this adapter, you will need to install these dependencies by following these [installation instructions](https://github.com/Superbalist/php-pubsub-kafka).
-
-You can then include the adapter using:
-```bash
-composer require superbalist/php-pubsub-kafka
-```
-
-## Usage
-
-```php
-// get the pub-sub manager
-$pubsub = app('pubsub');
-
-// note: function calls on the manager are proxied through to the default connection
-// eg: you can do this on the manager OR a connection
-$pubsub->publish('channel_name', 'message');
-
-// get the default connection
-$pubsub = app('pubsub.connection');
-// or
-$pubsub = app(\Superbalist\PubSub\PubSubAdapterInterface::class);
-
-// get a specific connection
-$pubsub = app('pubsub')->connection('redis');
-
-// publish a message
-// the message can be a string, array, bool, object - anything which can be json encoded
-$pubsub->publish('channel_name', 'this is where your message goes');
-$pubsub->publish('channel_name', ['key' => 'value']);
-$pubsub->publish('channel_name', true);
-
-// publish multiple messages
-$messages = [
-    'message 1',
-    'message 2',
-];
-$pubsub->publishBatch('channel_name', $messages);
-
-// subscribe to a channel
-$pubsub->subscribe('channel_name', function ($message) {
-    var_dump($message);
-});
-
-// all the above commands can also be done using the facade
-PubSub::connection('kafka')->publish('channel_name', 'Hello World!');
-
-PubSub::connection('kafka')->subscribe('channel_name', function ($message) {
-    var_dump($message);
-});
-```
+    ```bash
+    $ pecl install rdkafka
+    ```
+    
+3. Add the following to your php.ini file to enable the php-rdkafka extension
+    `extension=rdkafka.so`
 
 ## Creating a Subscriber
 
@@ -207,7 +150,7 @@ Here is an example of how you can do this:
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Superbalist\LaravelPubSub\PubSubConnectionFactory;
+use Averinuveren\LumenPubSub\PubSubConnectionFactory;
 use Superbalist\PubSub\PubSubAdapterInterface;
 
 class MyExampleKafkaSubscriber extends Command

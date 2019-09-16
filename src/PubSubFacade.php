@@ -1,9 +1,13 @@
 <?php
 
-namespace Superbalist\LaravelPubSub;
+namespace Averinuveren\LumenPubSub;
 
 use Illuminate\Support\Facades\Facade;
 
+/**
+ * Class PubSubFacade
+ * @package Superbalist\LaravelPubSub
+ */
 class PubSubFacade extends Facade
 {
     /**

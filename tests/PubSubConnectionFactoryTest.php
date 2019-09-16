@@ -4,11 +4,16 @@ namespace Tests;
 
 use Google\Cloud\PubSub\PubSubClient as GoogleCloudPubSubClient;
 use GuzzleHttp\Client;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
 use Mockery;
 use Predis\Client as RedisClient;
 use Psr\Cache\CacheItemPoolInterface;
+use RdKafka\Conf;
+use RdKafka\KafkaConsumer;
+use RdKafka\Producer;
+use RdKafka\TopicConf;
 use Superbalist\LaravelPubSub\PubSubConnectionFactory;
 use Superbalist\PubSub\Adapters\DevNullPubSubAdapter;
 use Superbalist\PubSub\Adapters\LocalPubSubAdapter;
@@ -20,26 +25,33 @@ use Superbalist\PubSub\Redis\RedisPubSubAdapter;
 
 class PubSubConnectionFactoryTest extends TestCase
 {
+    /**
+     * @throws BindingResolutionException
+     */
     public function testMakeDevNullAdapter()
     {
+        /** @var Container $container */
         $container = Mockery::mock(Container::class);
-
         $factory = new PubSubConnectionFactory($container);
-
         $adapter = $factory->make('/dev/null');
         $this->assertInstanceOf(DevNullPubSubAdapter::class, $adapter);
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     public function testMakeLocalAdapter()
     {
+        /** @var Container $container */
         $container = Mockery::mock(Container::class);
-
         $factory = new PubSubConnectionFactory($container);
-
         $adapter = $factory->make('local');
         $this->assertInstanceOf(LocalPubSubAdapter::class, $adapter);
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     public function testMakeRedisAdapter()
     {
         $config = [
@@ -52,7 +64,7 @@ class PubSubConnectionFactoryTest extends TestCase
         ];
 
         $container = Mockery::mock(Container::class);
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->withArgs([
                 'pubsub.redis.redis_client',
                 ['config' => $config],
@@ -79,25 +91,25 @@ class PubSubConnectionFactoryTest extends TestCase
 
         $container = Mockery::mock(Container::class);
 
-        $producer = Mockery::mock(\RdKafka\Producer::class);
+        $producer = Mockery::mock(Producer::class);
         $producer->shouldReceive('addBrokers')
             ->with('localhost')
             ->once();
 
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->with('pubsub.kafka.producer')
             ->once()
             ->andReturn($producer);
 
-        $topicConf = Mockery::mock(\RdKafka\TopicConf::class);
+        $topicConf = Mockery::mock(TopicConf::class);
         $topicConf->shouldReceive('set');
 
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->with('pubsub.kafka.topic_conf')
             ->once()
             ->andReturn($topicConf);
 
-        $conf = Mockery::mock(\RdKafka\Conf::class);
+        $conf = Mockery::mock(Conf::class);
         $conf->shouldReceive('set')
             ->withArgs([
                 'metadata.broker.list',
@@ -131,7 +143,7 @@ class PubSubConnectionFactoryTest extends TestCase
             ->once()
             ->andReturn($conf);
 
-        $consumer = Mockery::mock(\RdKafka\KafkaConsumer::class);
+        $consumer = Mockery::mock(KafkaConsumer::class);
 
         $container->shouldReceive('make')
             ->withArgs([
@@ -150,7 +162,7 @@ class PubSubConnectionFactoryTest extends TestCase
     public function testMakeGoogleCloudAdapter()
     {
         $container = Mockery::mock(Container::class);
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->withArgs([
                 'pubsub.gcloud.pub_sub_client',
                 [
@@ -184,10 +196,14 @@ class PubSubConnectionFactoryTest extends TestCase
         $this->assertFalse(getenv('IS_BATCH_DAEMON_RUNNING'));
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     public function testMakeGoogleCloudAdapterWithBackgroundBatchingAndDaemonEnabled()
     {
+        /** @var Container $container */
         $container = Mockery::mock(Container::class);
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->withArgs([
                 'pubsub.gcloud.pub_sub_client',
                 [
@@ -229,7 +245,7 @@ class PubSubConnectionFactoryTest extends TestCase
         $container->shouldReceive('make')
             ->with('MyPSR6CacheImplementation::class')
             ->andReturn($cacheImplementation);
-        $container->shouldReceive('makeWith')
+        $container->shouldReceive('make')
             ->withArgs([
                 'pubsub.gcloud.pub_sub_client',
                 [

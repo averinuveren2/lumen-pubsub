@@ -1,40 +1,39 @@
 <?php
 
-namespace Superbalist\LaravelPubSub;
+namespace Averinuveren\LumenPubSub;
 
 use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
+/**
+ * Class SubscriberMakeCommand
+ * @package Superbalist\LaravelPubSub
+ */
 class SubscriberMakeCommand extends GeneratorCommand
 {
     /**
      * The console command name.
-     *
      * @var string
      */
     protected $name = 'make:subscriber';
 
     /**
      * The console command description.
-     *
      * @var string
      */
     protected $description = 'Create a new Artisan subscriber command';
 
     /**
      * The type of class being generated.
-     *
      * @var string
      */
     protected $type = 'Console command';
 
     /**
      * Replace the class name for the given stub.
-     *
      * @param  string  $stub
      * @param  string  $name
-     *
      * @return string
      */
     protected function replaceClass($stub, $name)
@@ -46,7 +45,6 @@ class SubscriberMakeCommand extends GeneratorCommand
 
     /**
      * Get the stub file for the generator.
-     *
      * @return string
      */
     protected function getStub()
@@ -56,9 +54,7 @@ class SubscriberMakeCommand extends GeneratorCommand
 
     /**
      * Get the default namespace for the class.
-     *
      * @param  string  $rootNamespace
-     *
      * @return string
      */
     protected function getDefaultNamespace($rootNamespace)
@@ -68,7 +64,6 @@ class SubscriberMakeCommand extends GeneratorCommand
 
     /**
      * Get the console command arguments.
-     *
      * @return array
      */
     protected function getArguments()
@@ -80,7 +75,6 @@ class SubscriberMakeCommand extends GeneratorCommand
 
     /**
      * Get the console command options.
-     *
      * @return array
      */
     protected function getOptions()

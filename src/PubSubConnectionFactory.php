@@ -1,8 +1,10 @@
 <?php
 
-namespace Superbalist\LaravelPubSub;
+namespace Averinuveren\LumenPubSub;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use Superbalist\PubSub\Adapters\DevNullPubSubAdapter;
 use Superbalist\PubSub\Adapters\LocalPubSubAdapter;
@@ -12,6 +14,10 @@ use Superbalist\PubSub\Kafka\KafkaPubSubAdapter;
 use Superbalist\PubSub\PubSubAdapterInterface;
 use Superbalist\PubSub\Redis\RedisPubSubAdapter;
 
+/**
+ * Class PubSubConnectionFactory
+ * @package Superbalist\LaravelPubSub
+ */
 class PubSubConnectionFactory
 {
     /**
@@ -29,13 +35,12 @@ class PubSubConnectionFactory
 
     /**
      * Factory a PubSubAdapterInterface.
-     *
-     * @param string $driver
+     * @param $driver
      * @param array $config
-     *
-     * @return PubSubAdapterInterface
+     * @return DevNullPubSubAdapter|LocalPubSubAdapter|GoogleCloudPubSubAdapter|HTTPPubSubAdapter|KafkaPubSubAdapter|RedisPubSubAdapter
+     * @throws BindingResolutionException
      */
-    public function make($driver, array $config = [])
+    public function make($driver, array $config = []): PubSubAdapterInterface
     {
         switch ($driver) {
             case '/dev/null':
@@ -57,59 +62,56 @@ class PubSubConnectionFactory
 
     /**
      * Factory a RedisPubSubAdapter.
-     *
      * @param array $config
-     *
-     * @return RedisPubSubAdapter
+     * @return PubSubAdapterInterface
+     * @throws BindingResolutionException
      */
-    protected function makeRedisAdapter(array $config)
+    protected function makeRedisAdapter(array $config): PubSubAdapterInterface
     {
         if (!isset($config['read_write_timeout'])) {
             $config['read_write_timeout'] = 0;
         }
 
-        $client = $this->container->makeWith('pubsub.redis.redis_client', ['config' => $config]);
+        $client = $this->container->make('pubsub.redis.redis_client', ['config' => $config]);
 
         return new RedisPubSubAdapter($client);
     }
 
     /**
      * Factory a KafkaPubSubAdapter.
-     *
      * @param array $config
-     *
      * @return KafkaPubSubAdapter
+     * @throws BindingResolutionException
      */
-    protected function makeKafkaAdapter(array $config)
+    protected function makeKafkaAdapter(array $config): PubSubAdapterInterface
     {
         // create producer
-        $producer = $this->container->makeWith('pubsub.kafka.producer');
+        $producer = $this->container->make('pubsub.kafka.producer');
         $producer->addBrokers($config['brokers']);
 
         // create consumer
-        $topicConf = $this->container->makeWith('pubsub.kafka.topic_conf');
+        $topicConf = $this->container->make('pubsub.kafka.topic_conf');
         $topicConf->set('auto.offset.reset', 'smallest');
 
-        $conf = $this->container->makeWith('pubsub.kafka.conf');
-        $conf->set('group.id', array_get($config, 'consumer_group_id', 'php-pubsub'));
+        $conf = $this->container->make('pubsub.kafka.conf');
+        $conf->set('group.id', Arr::get($config, 'consumer_group_id', 'php-pubsub'));
         $conf->set('metadata.broker.list', $config['brokers']);
         $conf->set('enable.auto.commit', 'false');
         $conf->set('offset.store.method', 'broker');
         $conf->setDefaultTopicConf($topicConf);
 
-        $consumer = $this->container->makeWith('pubsub.kafka.consumer', ['conf' => $conf]);
+        $consumer = $this->container->make('pubsub.kafka.consumer', ['conf' => $conf]);
 
         return new KafkaPubSubAdapter($producer, $consumer);
     }
 
     /**
      * Factory a GoogleCloudPubSubAdapter.
-     *
      * @param array $config
-     *
      * @return GoogleCloudPubSubAdapter
+     * @throws BindingResolutionException
      */
-    protected function makeGoogleCloudAdapter(array $config)
+    protected function makeGoogleCloudAdapter(array $config): PubSubAdapterInterface
     {
         $clientConfig = [
             'projectId' => $config['project_id'],
@@ -119,13 +121,13 @@ class PubSubConnectionFactory
             $clientConfig['authCache'] = $this->container->make($config['auth_cache']);
         }
 
-        $client = $this->container->makeWith('pubsub.gcloud.pub_sub_client', ['config' => $clientConfig]);
+        $client = $this->container->make('pubsub.gcloud.pub_sub_client', ['config' => $clientConfig]);
 
-        $clientIdentifier = array_get($config, 'client_identifier');
-        $autoCreateTopics = array_get($config, 'auto_create_topics', true);
-        $autoCreateSubscriptions = array_get($config, 'auto_create_subscriptions', true);
-        $backgroundBatching = array_get($config, 'background_batching', false);
-        $backgroundDaemon = array_get($config, 'background_daemon', false);
+        $clientIdentifier = Arr::get($config, 'client_identifier');
+        $autoCreateTopics = Arr::get($config, 'auto_create_topics', true);
+        $autoCreateSubscriptions = Arr::get($config, 'auto_create_subscriptions', true);
+        $backgroundBatching = Arr::get($config, 'background_batching', false);
+        $backgroundDaemon = Arr::get($config, 'background_daemon', false);
 
         if ($backgroundDaemon) {
             putenv('IS_BATCH_DAEMON_RUNNING=true');
@@ -141,12 +143,11 @@ class PubSubConnectionFactory
 
     /**
      * Factory a HTTPPubSubAdapter.
-     *
      * @param array $config
-     *
      * @return HTTPPubSubAdapter
+     * @throws BindingResolutionException
      */
-    protected function makeHTTPAdapter(array $config)
+    protected function makeHTTPAdapter(array $config): PubSubAdapterInterface
     {
         $client = $this->container->make('pubsub.http.client');
         $adapter = $this->make(

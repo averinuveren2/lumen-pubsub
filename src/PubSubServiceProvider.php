@@ -1,13 +1,21 @@
 <?php
 
-namespace Superbalist\LaravelPubSub;
+namespace Averinuveren\LumenPubSub;
 
 use Google\Cloud\PubSub\PubSubClient as GoogleCloudPubSubClient;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 use Predis\Client as RedisClient;
+use RdKafka\Conf;
+use RdKafka\KafkaConsumer;
+use RdKafka\Producer;
+use RdKafka\TopicConf;
 use Superbalist\PubSub\PubSubAdapterInterface;
 
+/**
+ * Class PubSubServiceProvider
+ * @package Superbalist\LaravelPubSub
+ */
 class PubSubServiceProvider extends ServiceProvider
 {
     /**
@@ -61,19 +69,19 @@ class PubSubServiceProvider extends ServiceProvider
         });
 
         $this->app->bind('pubsub.kafka.topic_conf', function () {
-            return new \RdKafka\TopicConf();
+            return new TopicConf();
         });
 
         $this->app->bind('pubsub.kafka.producer', function () {
-            return new \RdKafka\Producer();
+            return new Producer();
         });
 
         $this->app->bind('pubsub.kafka.conf', function () {
-            return new \RdKafka\Conf();
+            return new Conf();
         });
 
         $this->app->bind('pubsub.kafka.consumer', function ($app, $parameters) {
-            return new \RdKafka\KafkaConsumer($parameters['conf']);
+            return new KafkaConsumer($parameters['conf']);
         });
 
         $this->app->bind('pubsub.http.client', function () {
@@ -83,7 +91,6 @@ class PubSubServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
-     *
      * @return array
      */
     public function provides()
